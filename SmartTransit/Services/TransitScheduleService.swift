@@ -145,6 +145,8 @@ class TransitScheduleService: ObservableObject {
         
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+        formatter.timeZone = TimeZone(identifier: "UTC")  // Store timestamps in UTC
+        formatter.locale = Locale(identifier: "en_US_POSIX")  // Ensure consistent formatting
         let lastUpdated = formatter.string(from: Date())
         
         return TransitSchedule(

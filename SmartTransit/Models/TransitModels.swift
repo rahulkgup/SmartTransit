@@ -69,3 +69,4 @@ extension ScheduleEntry {
         return "+\(delay) min"
     }
 }
+

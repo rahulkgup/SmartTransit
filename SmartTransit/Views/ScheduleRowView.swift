@@ -157,3 +157,4 @@ extension Color {
     return ScheduleRowView(scheduleEntry: sampleEntry, route: sampleRoute)
         .padding()
 }
+

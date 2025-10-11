@@ -77,6 +77,8 @@ struct StopHeaderView: View {
         
         let displayFormatter = DateFormatter()
         displayFormatter.timeStyle = .short
+        displayFormatter.timeZone = TimeZone.current  // Use device's local timezone
+        displayFormatter.locale = Locale.current      // Use device's locale
         return displayFormatter.string(from: date)
     }
 }
@@ -97,3 +99,4 @@ struct StopHeaderView: View {
     )
     .padding()
 }
+

@@ -157,6 +157,8 @@ struct TransitScheduleView: View {
     private func isWithinNextTwoHours(_ timeString: String) -> Bool {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
+        formatter.timeZone = TimeZone.current  // Use device's local timezone
+        formatter.locale = Locale.current      // Use device's locale
         
         guard let scheduleTime = formatter.date(from: timeString) else { return false }
         
