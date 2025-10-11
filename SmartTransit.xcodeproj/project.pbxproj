@@ -251,8 +251,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P3Z53C5FM8;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = SmartTransit/Info.plist;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "SmartTransit needs your location to show nearby transit stops and schedules even when the app is in the background.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "SmartTransit needs your location to show nearby transit stops and schedules.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -283,8 +286,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = P3Z53C5FM8;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = SmartTransit/Info.plist;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "SmartTransit needs your location to show nearby transit stops and schedules even when the app is in the background.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "SmartTransit needs your location to show nearby transit stops and schedules.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
