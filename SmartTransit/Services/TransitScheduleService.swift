@@ -121,6 +121,7 @@ class TransitScheduleService: ObservableObject {
                 stopId: "north_springs",
                 arrivalTime: entry.departureTime,
                 departureTime: entry.arrivalTime,
+                direction: entry.bound,  // "Northbound" from CSV
                 isRealTime: false,
                 delay: nil
             )
@@ -136,6 +137,7 @@ class TransitScheduleService: ObservableObject {
                 stopId: "windward_pnr",
                 arrivalTime: entry.departureTime,
                 departureTime: entry.arrivalTime,
+                direction: entry.bound,  // "Southbound" from CSV
                 isRealTime: false,
                 delay: nil
             )

@@ -24,7 +24,7 @@ struct ScheduleRowView: View {
                         .background(Color(hex: route.color))
                         .clipShape(Circle())
                     
-                    Text(route.direction)
+                    Text(scheduleEntry.direction)
                         .font(.caption2)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
@@ -150,6 +150,7 @@ extension Color {
         stopId: "stop_001",
         arrivalTime: "08:15",
         departureTime: "08:17",
+        direction: "Northbound",
         isRealTime: true,
         delay: 2
     )

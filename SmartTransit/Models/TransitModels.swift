@@ -31,6 +31,7 @@ struct ScheduleEntry: Identifiable, Codable {
     let stopId: String
     let arrivalTime: String // Format: "HH:mm"
     let departureTime: String // Format: "HH:mm"
+    let direction: String // "Northbound" or "Southbound"
     let isRealTime: Bool
     let delay: Int? // Delay in minutes, nil if on time
 }
