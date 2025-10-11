@@ -156,20 +156,16 @@ struct TransitScheduleView: View {
     
     private func isWithinNextTwoHours(_ timeString: String) -> Bool {
         let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
+        formatter.dateFormat = "h:mm a"  // 12-hour format with AM/PM
         formatter.timeZone = TimeZone.current  // Use device's local timezone
-        formatter.locale = Locale.current      // Use device's locale
+        formatter.locale = Locale(identifier: "en_US_POSIX")  // Ensure AM/PM parsing works
         
         guard let scheduleTime = formatter.date(from: timeString) else { return false }
         
         let calendar = Calendar.current
         let now = Date()
         
-        // Get current time components
-        let currentHour = calendar.component(.hour, from: now)
-        let currentMinute = calendar.component(.minute, from: now)
-        
-        // Get schedule time components
+        // Get schedule time components (hour in 24-hour format)
         let scheduleHour = calendar.component(.hour, from: scheduleTime)
         let scheduleMinute = calendar.component(.minute, from: scheduleTime)
         
@@ -179,16 +175,13 @@ struct TransitScheduleView: View {
         scheduleComponents.minute = scheduleMinute
         scheduleComponents.second = 0
         
-        guard let finalScheduleTime = calendar.date(from: scheduleComponents) else { return false }
+        guard var finalScheduleTime = calendar.date(from: scheduleComponents) else { return false }
         
-        // If the schedule time is before current time, it might be for tomorrow
-        // (This handles cases near midnight, but for most cases we want today's schedule)
-        let currentTimeInMinutes = currentHour * 60 + currentMinute
-        let scheduleTimeInMinutes = scheduleHour * 60 + scheduleMinute
-        
-        // If schedule time already passed today, skip it
-        if scheduleTimeInMinutes < currentTimeInMinutes {
-            return false
+        // If the schedule time is in the past, it might be for tomorrow
+        // This handles late-night services that cross midnight
+        if finalScheduleTime < now {
+            // Add one day to the schedule time
+            finalScheduleTime = calendar.date(byAdding: .day, value: 1, to: finalScheduleTime) ?? finalScheduleTime
         }
         
         let twoHoursFromNow = calendar.date(byAdding: .hour, value: 2, to: now) ?? now
