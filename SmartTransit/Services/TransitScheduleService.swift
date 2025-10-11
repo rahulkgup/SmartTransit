@@ -7,16 +7,34 @@
 
 import Foundation
 import Combine
+import CoreLocation
 
 class TransitScheduleService: ObservableObject {
     @Published var schedule: TransitSchedule?
     @Published var isLoading = false
     @Published var error: Error?
+    @Published var nearestStop: TransitStop?
     
     private var cancellables = Set<AnyCancellable>()
+    private var refreshTimer: Timer?
+    private let locationManager: LocationManager
     
-    init() {
+    init(locationManager: LocationManager = LocationManager()) {
+        self.locationManager = locationManager
+        
+        // Observe location updates
+        locationManager.$location
+            .sink { [weak self] _ in
+                self?.updateNearestStop()
+            }
+            .store(in: &cancellables)
+        
         loadSchedule()
+        startAutoRefresh()
+    }
+    
+    deinit {
+        stopAutoRefresh()
     }
     
     func loadSchedule() {
@@ -187,13 +205,54 @@ class TransitScheduleService: ObservableObject {
     }
     
     func getNearestStop() -> TransitStop? {
-        // For demo purposes, return the first stop
-        // In a real app, you would use location services to find the nearest stop
-        return schedule?.stops.first
+        return nearestStop ?? schedule?.stops.first
+    }
+    
+    private func updateNearestStop() {
+        guard let userLocation = locationManager.location,
+              let stops = schedule?.stops else {
+            nearestStop = schedule?.stops.first
+            return
+        }
+        
+        // Find the nearest stop based on user's location
+        var nearestDistance: CLLocationDistance = .greatestFiniteMagnitude
+        var closestStop: TransitStop?
+        
+        for stop in stops {
+            let stopLocation = CLLocation(latitude: stop.latitude, longitude: stop.longitude)
+            let distance = userLocation.distance(from: stopLocation)
+            
+            if distance < nearestDistance {
+                nearestDistance = distance
+                closestStop = stop
+            }
+        }
+        
+        nearestStop = closestStop
     }
     
     func refreshSchedule() {
         loadSchedule()
+        updateNearestStop()
+    }
+    
+    // MARK: - Auto Refresh
+    
+    private func startAutoRefresh() {
+        // Refresh every 60 seconds to keep schedule current
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+            self?.refreshSchedule()
+        }
+    }
+    
+    private func stopAutoRefresh() {
+        refreshTimer?.invalidate()
+        refreshTimer = nil
+    }
+    
+    func getLocationManager() -> LocationManager {
+        return locationManager
     }
 }
 
@@ -213,3 +272,4 @@ enum TransitScheduleError: Error, LocalizedError {
         }
     }
 }
+

@@ -6,14 +6,29 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct ContentView: View {
     @StateObject private var scheduleService = TransitScheduleService()
     @State private var selectedStop: TransitStop?
+    @State private var showLocationPermissionAlert = false
+    
+    private var locationManager: LocationManager {
+        scheduleService.getLocationManager()
+    }
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
+                // Location permission banner
+                if locationManager.authorizationStatus == .denied || locationManager.authorizationStatus == .restricted {
+                    LocationPermissionBanner(
+                        onEnableLocation: {
+                            showLocationPermissionAlert = true
+                        }
+                    )
+                }
+                
                 if scheduleService.isLoading {
                     LoadingView()
                 } else if let error = scheduleService.error {
@@ -35,18 +50,55 @@ struct ContentView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        scheduleService.refreshSchedule()
-                    }) {
-                        Image(systemName: "arrow.clockwise")
+                    HStack {
+                        // Location status indicator
+                        if locationManager.authorizationStatus == .authorizedWhenInUse || locationManager.authorizationStatus == .authorizedAlways {
+                            if locationManager.location != nil {
+                                Image(systemName: "location.fill")
+                                    .foregroundColor(.green)
+                                    .font(.caption)
+                            } else {
+                                Image(systemName: "location.slash")
+                                    .foregroundColor(.orange)
+                                    .font(.caption)
+                            }
+                        }
+                        
+                        Button(action: {
+                            scheduleService.refreshSchedule()
+                        }) {
+                            Image(systemName: "arrow.clockwise")
+                        }
                     }
                 }
             }
         }
         .onAppear {
+            requestLocationIfNeeded()
             if selectedStop == nil {
                 selectedStop = scheduleService.getNearestStop()
             }
+        }
+        .alert("Location Services Disabled", isPresented: $showLocationPermissionAlert) {
+            Button("Open Settings", role: .cancel) {
+                if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(settingsURL)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Please enable location services in Settings to see nearby transit stops.")
+        }
+    }
+    
+    private func requestLocationIfNeeded() {
+        switch locationManager.authorizationStatus {
+        case .notDetermined:
+            locationManager.requestLocationPermission()
+        case .authorizedWhenInUse, .authorizedAlways:
+            locationManager.startUpdatingLocation()
+        default:
+            break
         }
     }
 }
@@ -110,11 +162,34 @@ struct TransitScheduleView: View {
         
         let calendar = Calendar.current
         let now = Date()
-        let twoHoursFromNow = calendar.date(byAdding: .hour, value: 2, to: now) ?? now
         
-        let today = calendar.startOfDay(for: now)
-        let scheduleDateTime = calendar.date(byAdding: .hour, value: calendar.component(.hour, from: scheduleTime), to: today) ?? now
-        let finalScheduleTime = calendar.date(byAdding: .minute, value: calendar.component(.minute, from: scheduleTime), to: scheduleDateTime) ?? now
+        // Get current time components
+        let currentHour = calendar.component(.hour, from: now)
+        let currentMinute = calendar.component(.minute, from: now)
+        
+        // Get schedule time components
+        let scheduleHour = calendar.component(.hour, from: scheduleTime)
+        let scheduleMinute = calendar.component(.minute, from: scheduleTime)
+        
+        // Create schedule datetime for today
+        var scheduleComponents = calendar.dateComponents([.year, .month, .day], from: now)
+        scheduleComponents.hour = scheduleHour
+        scheduleComponents.minute = scheduleMinute
+        scheduleComponents.second = 0
+        
+        guard let finalScheduleTime = calendar.date(from: scheduleComponents) else { return false }
+        
+        // If the schedule time is before current time, it might be for tomorrow
+        // (This handles cases near midnight, but for most cases we want today's schedule)
+        let currentTimeInMinutes = currentHour * 60 + currentMinute
+        let scheduleTimeInMinutes = scheduleHour * 60 + scheduleMinute
+        
+        // If schedule time already passed today, skip it
+        if scheduleTimeInMinutes < currentTimeInMinutes {
+            return false
+        }
+        
+        let twoHoursFromNow = calendar.date(byAdding: .hour, value: 2, to: now) ?? now
         
         return finalScheduleTime >= now && finalScheduleTime <= twoHoursFromNow
     }
@@ -199,6 +274,49 @@ struct EmptyScheduleView: View {
         .frame(maxWidth: .infinity)
         .background(Color(.systemGray6))
         .cornerRadius(12)
+    }
+}
+
+struct LocationPermissionBanner: View {
+    let onEnableLocation: () -> Void
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "location.slash.fill")
+                .font(.title3)
+                .foregroundColor(.orange)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Location Services Off")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                
+                Text("Enable to see nearby stops")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            Button(action: onEnableLocation) {
+                Text("Enable")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.orange)
+                    .cornerRadius(8)
+            }
+        }
+        .padding()
+        .background(Color.orange.opacity(0.1))
+        .overlay(
+            Rectangle()
+                .frame(height: 1)
+                .foregroundColor(Color.orange.opacity(0.3)),
+            alignment: .bottom
+        )
     }
 }
 
