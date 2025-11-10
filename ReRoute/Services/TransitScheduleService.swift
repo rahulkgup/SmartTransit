@@ -192,12 +192,39 @@ class TransitScheduleService: ObservableObject {
         
         return entries
     }
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return formatter
+    }()
+    
+    private func comparisonDate(for timeString: String) -> Date? {
+        guard let date = TransitScheduleService.timeFormatter.date(from: timeString) else {
+            return nil
+        }
+        
+        // Treat early-morning times (12 AM - 2:59 AM) as belonging to the next service day
+        let calendar = Calendar(identifier: .gregorian)
+        let components = calendar.dateComponents([.hour], from: date)
+        if let hour = components.hour, hour < 3 {
+            return calendar.date(byAdding: .day, value: 1, to: date)
+        }
+        return date
+    }
     
     func getScheduleForStop(stopId: String) -> [ScheduleEntry] {
         guard let schedule = schedule else { return [] }
         return schedule.scheduleEntries
             .filter { $0.stopId == stopId }
-            .sorted { $0.arrivalTime < $1.arrivalTime }
+            .sorted { first, second in
+                guard let firstDate = comparisonDate(for: first.arrivalTime),
+                      let secondDate = comparisonDate(for: second.arrivalTime) else {
+                    return first.arrivalTime < second.arrivalTime
+                }
+                return firstDate < secondDate
+            }
     }
     
     func getRouteForId(_ routeId: String) -> TransitRoute? {
